@@ -1,0 +1,95 @@
+import { BridgeSettingsTelegram } from "./BridgeSettingsTelegram";
+import { BridgeSettingsDiscord } from "./BridgeSettingsDiscord";
+import { BridgeSettingsTelegramProperties } from "./BridgeSettingsTelegram";
+import { BridgeSettingsDiscordProperties } from "./BridgeSettingsDiscord";
+
+export interface BridgeProperties {
+	name: string;
+	telegram: BridgeSettingsTelegramProperties;
+	discord: BridgeSettingsDiscordProperties;
+	direction: "both" | "d2t" | "t2d";
+}
+
+/********************
+ * The Bridge class *
+ ********************/
+
+/** A bridge between Discord and Telegram */
+export class Bridge {
+	public name: string;
+	public direction: BridgeProperties["direction"];
+	public telegram: BridgeSettingsTelegramProperties;
+	public discord: BridgeSettingsDiscordProperties;
+	/**
+	 * Creates a new bridge
+	 *
+	 * @param settings Settings for the bridge
+	 * @param settings.name Name of the bridge
+	 * @param settings.telegram Settings for the Telegram side of the bridge. See the constructor for {@link BridgeSettingsTelegram}
+	 * @param settings.discord Settings for the Discord side of the bridge. See the constructor for {@link BridgeSettingsDiscord}
+	 *
+	 * @throws If the settings object does not validate
+	 */
+	constructor(settings: BridgeProperties) {
+		// Check that the settings object is valid
+		Bridge.validate(settings);
+
+		/** Name of the bridge */
+		this.name = settings.name;
+
+		/** Direction of the bridge */
+		this.direction = settings.direction;
+
+		/** Settings for the Telegram side of the bridge */
+		this.telegram = new BridgeSettingsTelegram(settings.telegram);
+
+		/** Settings for the Discord side of the bridge */
+		this.discord = new BridgeSettingsDiscord(settings.discord);
+	}
+
+	/**
+	 * Validates a raw settings object, checking if it is usable for creating a Bridge object
+	 *
+	 * @param settings The object to validate
+	 *
+	 * @throws If the object is not suitable. The error message says what the problem is
+	 */
+	static validate(settings: BridgeProperties) {
+		// Check that the settings are indeed in object form
+		if (!(settings instanceof Object)) {
+			throw new Error("`settings` must be an object");
+		}
+
+		if (typeof settings.name !== "string") {
+			throw new Error("`settings.name` must be a string");
+		}
+
+		// Check the direction
+		if (
+			![
+				Bridge.DIRECTION_BOTH,
+				Bridge.DIRECTION_DISCORD_TO_TELEGRAM,
+				Bridge.DIRECTION_TELEGRAM_TO_DISCORD
+			].includes(settings.direction)
+		) {
+			throw new Error("`settings.direction` is not a valid bridge direction");
+		}
+
+		BridgeSettingsTelegram.validate(settings.telegram);
+
+		BridgeSettingsDiscord.validate(settings.discord);
+	}
+
+
+	static get DIRECTION_BOTH(): "both" {
+		return "both";
+	}
+
+	static get DIRECTION_DISCORD_TO_TELEGRAM(): "d2t" {
+		return "d2t";
+	}
+
+	static get DIRECTION_TELEGRAM_TO_DISCORD(): "t2d" {
+		return "t2d";
+	}
+}
